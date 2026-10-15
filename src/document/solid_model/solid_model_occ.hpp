@@ -1,8 +1,9 @@
 #include "solid_model.hpp"
 #include "document/group/igroup_solid_model.hpp"
 #include "util/color.hpp"
-#include "solid_model_element_map.hpp"
 #include <TopoDS.hxx>
+#include "naming/element_map.hpp"
+#include <memory>
 
 namespace dune3d {
 

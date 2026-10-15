@@ -1,6 +1,7 @@
 #include "util.hpp"
 #include "fs_util.hpp"
 #include "nlohmann/json.hpp"
+#include <cstddef>
 #include <fstream>
 #include <giomm.h>
 #ifdef G_OS_WIN32
@@ -122,6 +123,16 @@ void add_to_recent_docs(const std::filesystem::path &path)
 #ifdef G_OS_WIN32
     SHAddToRecentDocs(SHARD_PATHW, path.c_str());
 #endif
+}
+
+void hash_combine(std::size_t &seed, const std::size_t &hash) {
+    const std::size_t m = 0xe9846afb1a615dull;
+
+    seed ^= seed >> 32;
+    seed *= m;
+    seed ^= seed >> 32;
+    seed *= m;
+    seed ^= seed >> 28;
 }
 
 } // namespace dune3d

@@ -28,4 +28,7 @@ const std::locale &get_locale();
 
 void add_to_recent_docs(const std::filesystem::path &path);
 
+// Hash combine method from boost.
+void hash_combine(std::size_t &seed, const std::size_t& hash);
+
 } // namespace dune3d
