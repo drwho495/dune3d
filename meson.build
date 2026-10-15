@@ -162,6 +162,11 @@ src_common = files(
   'src/util/picture_util.cpp',
   'src/util/paths.cpp',
   'src/util/step_exporter.cpp',
+  'src/naming/element_map.cpp',
+  'src/naming/history_transformation_base.cpp',
+  'src/naming/defined_history_transformations.cpp',
+  'src/naming/indexed_name.cpp',
+  'src/naming/geometry_operations_occ.cpp',
 )
 
 src_gui = files(
