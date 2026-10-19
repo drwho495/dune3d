@@ -8,11 +8,10 @@ namespace geometry_operations_occ {
 
 MappedShapeOCC fuse(const std::vector<MappedShapeOCC> &tools);
 
-MappedShapeOCC fuse(const MappedShapeOCC &base, const MappedShapeOCC &tool) {
-    std::vector<MappedShapeOCC> tools;
+MappedShapeOCC make_wire(const std::vector<MappedShapeOCC> &edges);
 
-    tools.push_back(base);
-};
+void map_sub_element(MappedShapeOCC &shape, const std::vector<MappedShapeOCC> &source_shapes);
+void map_sub_element(MappedShapeOCC &shape, const MappedShapeOCC &source_shape);
     
 } // namespace geometry_operations_occ
 } // namespace dune3d

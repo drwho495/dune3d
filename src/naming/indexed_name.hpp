@@ -1,10 +1,12 @@
 #pragma once
 
+#include "nlohmann/json_fwd.hpp"
 #include <cstdint>
 #include <TopAbs_ShapeEnum.hxx>
 #include <string>
 
 namespace dune3d {
+using json = nlohmann::json;
 
 class IndexedName {
 public:
@@ -22,6 +24,8 @@ public:
     uint32_t m_index = 0;
 
     std::size_t hash() const;
+
+    std::string to_string() const;
 private:
     static constexpr std::hash<TopAbs_ShapeEnum> s_element_type_hasher {};
     static constexpr std::hash<uint32_t> s_int_hasher {};

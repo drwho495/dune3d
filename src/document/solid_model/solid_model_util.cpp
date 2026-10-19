@@ -1,4 +1,7 @@
 #include "solid_model_util.hpp"
+#include "naming/mapped_shape_occ.hpp"
+#include "naming/defined_history_nodes.hpp"
+#include "naming/geometry_operations_occ.hpp"
 #include "util/paths.hpp"
 #include "document/entity/entity.hpp"
 #include "document/entity/entity_line2d.hpp"
@@ -9,6 +12,7 @@
 #include "document/entity/entity_cluster.hpp"
 #include "document/entity/entity_text.hpp"
 #include "document/document.hpp"
+#include "util/step_exporter.hpp"
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
@@ -18,6 +22,9 @@
 #include <NCollection_Array1.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <gp_Circ.hxx>
+#include <memory>
+#include <vector>
+#include "nlohmann/json.hpp"
 
 namespace dune3d::solid_model_util {
 
@@ -255,8 +262,6 @@ TopoDS_Wire FaceBuilder::path_to_wire(const Clipper2Lib::PathD &path, bool hole,
     if (orig_path.size() == 1) {
         auto &orig_edge = orig_path.front().second;
         if (auto rad = dynamic_cast<const IEntityRadius *>(&orig_edge.entity)) {
-            BRepBuilderAPI_MakeWire wire;
-
             const auto center = docref.transform(docref.wrkpl.transform(orig_edge.transform(rad->get_center())));
             auto normal = docref.transform_normal(docref.wrkpl.get_normal_vector());
             if (hole)
@@ -265,11 +270,13 @@ TopoDS_Wire FaceBuilder::path_to_wire(const Clipper2Lib::PathD &path, bool hole,
             gp_Circ garc(gp_Ax2(gp_Pnt(center.x, center.y, center.z), gp_Dir(normal.x, normal.y, normal.z)),
                          rad->get_radius());
 
+            MappedShapeOCC mappedEdge = {
+                BRepBuilderAPI_MakeEdge(garc).Shape(),
+                std::make_shared<EntityHistoryNode>(orig_edge.entity.m_uuid)
+            };
+            MappedShapeOCC mappedWire = geometry_operations_occ::make_wire({mappedEdge});
 
-            auto edge = BRepBuilderAPI_MakeEdge(garc);
-            wire.Add(edge);
-
-            return wire;
+            return TopoDS::Wire(mappedWire.m_shape);
         }
     }
 
@@ -296,8 +303,7 @@ TopoDS_Wire FaceBuilder::path_to_wire(const Clipper2Lib::PathD &path, bool hole,
     }
     const bool path_reverse = neg_count > pos_count;
 
-    BRepBuilderAPI_MakeWire wire;
-
+    std::vector<MappedShapeOCC> wireEdges;
 
     for (size_t i = 0; i < orig_path.size(); i++) {
         const auto &[node, edge] = get_node_and_edge(orig_path, i, path_reverse);
@@ -321,8 +327,10 @@ TopoDS_Wire FaceBuilder::path_to_wire(const Clipper2Lib::PathD &path, bool hole,
 
             gp_Circ garc(gp_Ax2(gp_Pnt(center.x, center.y, center.z), gp_Dir(normal.x, normal.y, normal.z)), radius);
 
-            auto new_edge = BRepBuilderAPI_MakeEdge(garc, sa, ea);
-            wire.Add(new_edge);
+            wireEdges.emplace_back(
+                BRepBuilderAPI_MakeEdge(garc, sa, ea).Shape(),
+                std::make_shared<EntityHistoryNode>(edge.entity.m_uuid)
+            );
         }
         else if (auto bezier = dynamic_cast<const EntityBezier2D *>(&edge.entity)) {
             NCollection_Array1<gp_Pnt> poles(1, 4);
@@ -340,17 +348,20 @@ TopoDS_Wire FaceBuilder::path_to_wire(const Clipper2Lib::PathD &path, bool hole,
             poles(4) = gp_Pnt(pbt.x, pbt.y, pbt.z);
 
             Handle(Geom_BezierCurve) curve = new Geom_BezierCurve(poles);
-            auto new_edge = BRepBuilderAPI_MakeEdge(curve);
 
-            wire.Add(new_edge);
+            wireEdges.emplace_back(
+                BRepBuilderAPI_MakeEdge(curve).Shape(),
+                std::make_shared<EntityHistoryNode>(edge.entity.m_uuid)
+            );
         }
         else {
-            auto new_edge = BRepBuilderAPI_MakeEdge(gp_Pnt(pat.x, pat.y, pat.z), gp_Pnt(pbt.x, pbt.y, pbt.z));
-
-            wire.Add(new_edge);
+            wireEdges.emplace_back(
+                BRepBuilderAPI_MakeEdge(gp_Pnt(pat.x, pat.y, pat.z), gp_Pnt(pbt.x, pbt.y, pbt.z)).Shape(),
+                std::make_shared<EntityHistoryNode>(edge.entity.m_uuid)
+            );
         }
     }
-    return wire;
+    return TopoDS::Wire(geometry_operations_occ::make_wire(wireEdges).m_shape);
 }
 
 FaceBuilder FaceBuilder::from_document(const Document &doc, const UUID &wrkpl_uu, const UUID &source_group_uu,

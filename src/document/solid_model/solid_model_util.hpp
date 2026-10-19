@@ -4,6 +4,7 @@
 #include <set>
 #include <list>
 #include "clipper2/clipper.h"
+#include "naming/mapped_shape_occ.hpp"
 #include <TopoDS_Builder.hxx>
 
 

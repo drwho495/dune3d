@@ -163,10 +163,11 @@ src_common = files(
   'src/util/paths.cpp',
   'src/util/step_exporter.cpp',
   'src/naming/element_map.cpp',
-  'src/naming/history_transformation_base.cpp',
-  'src/naming/defined_history_transformations.cpp',
+  'src/naming/history_node_base.cpp',
+  'src/naming/defined_history_nodes.cpp',
   'src/naming/indexed_name.cpp',
   'src/naming/geometry_operations_occ.cpp',
+  'src/naming/mapped_shape_occ.cpp',
 )
 
 src_gui = files(
