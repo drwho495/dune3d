@@ -86,7 +86,7 @@ MappedShapeOCC make_wire(const std::vector<MappedShapeOCC> &edges) {
         // this process modifies the geometry of the `sortedEdge`. we use `BRepBuilderAPI_MakeWire::Edge()`
         // to retrieve the newly created element with this modified geometry. we then
         // emplace that element onto a vector for mapping.
-        fixedInputEdges.emplace_back(wireBuilder.Edge(), edge->m_element_map);
+        fixedInputEdges.emplace_back(wireBuilder.Edge(), sortedEdge->m_element_map);
     }
 
     MappedShapeOCC returnShape {wireBuilder.Wire()};
